@@ -5,7 +5,7 @@ Created on 9 Dec 2012
 '''
 from distutils.core import setup
 setup(name='PCF8591P',
-      version='0.0.1',
+      version='0.0.2',
       description='PCF8591P Class',
       maintainer='Jamie Jackson',
       maintainer_email='jamie@jacobean.net',
