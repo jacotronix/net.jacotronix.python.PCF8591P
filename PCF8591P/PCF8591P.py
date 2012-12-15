@@ -1,36 +1,43 @@
 '''
-Created on 12 Dec 2012
-
-@author: Jamie
-'''
-'''
 Created on 28 Nov 2012
+
 @author: Jamie
 '''
 
+# Help with getting started with this device came from Mike 'Grumpy' Cook on the
+# Raspberry Pi Forums (http://www.raspberrypi.org/phpBB3/viewtopic.php?f=32&t=15578)
+
+# Mike's very interesting site can be found at: http://www.thebox.myzen.co.uk/Site/Welcome.html
+
+# Exception class for an I2C address out of bounds
 class I2CaddressOutOfBoundsError(Exception):
     message = 'I2C Exception: I2C Address Out of Bounds'
 
+# Exception class for a channel number out of bounds
 class PCF8591PchannelOutOfBoundsError(Exception):
     message = 'PCF8591P Exception: ADC Channel Out of Bounds'
 
+# Exception class for a DAC value out of bounds
 class PCF8591PDACvalueOutOfBoundsError(Exception):
     message = 'PCF8591P Exception: DAC Output Value Out of Bounds'
 
 class PCF8591P:
 
+    # Constructor
     def __init__(self, __i2cBus, __addr):
         self.__bus = __i2cBus
         self.__addr = self.__checkI2Caddress(__addr)
         self.__DACEnabled = 0x00
-        
+    
+    # Read single ADC Channel
     def readADC(self, __chan = 0):
         __checkedChan = self.__checkChannelNo(__chan)
         self.__bus.write_byte(self.__addr, __checkedChan  | self.__DACEnabled)
         __reading = self.__bus.read_byte(self.__addr) # seems to need to throw away first reading
         __reading = self.__bus.read_byte(self.__addr) # read A/D
         return __reading
-        
+    
+    # Read all ADC channels
     def readAllADC(self):
         __readings = []
         self.__bus.write_byte(self.__addr, 0x04  | self.__DACEnabled)
@@ -39,19 +46,23 @@ class PCF8591P:
             __readings.append(self.__bus.read_byte(self.__addr)) # read ADC
         return __readings   
     
+    # Set DAC value and enable output
     def writeDAC(self, __val=0):
         __checkedVal = self.__checkDACVal(__val)
         self.__DACEnabled = 0x40
         self.__bus.write_byte_data(self.__addr, self.__DACEnabled, __checkedVal)
-        
+    
+    # Enable DAC output    
     def enableDAC(self):
         self.__DACEnabled = 0x40
         self.__bus.write_byte(self.__addr, self.__DACEnabled)
-        
+    
+    # Disable DAC output
     def disableDAC(self):
         self.__DACEnabled = 0x00
         self.__bus.write_byte(self.__addr, self.__DACEnabled)
-        
+    
+    # Check I2C address is within bounds
     def __checkI2Caddress(self, __addr):
         if type(__addr) is not int:
             raise I2CaddressOutOfBoundsError
@@ -61,6 +72,7 @@ class PCF8591P:
             raise I2CaddressOutOfBoundsError
         return __addr
 
+    # Check if ADC channel number is within bounds
     def __checkChannelNo(self, __chan):
         if type(__chan) is not int:
             raise PCF8591PchannelOutOfBoundsError
@@ -70,6 +82,7 @@ class PCF8591P:
             raise PCF8591PchannelOutOfBoundsError
         return __chan
 
+    # Check if DAC output value is within bounds
     def __checkDACVal(self, __val):
         if type(__val) is not int:
             raise PCF8591PDACvalueOutOfBoundsError
@@ -79,6 +92,7 @@ class PCF8591P:
             raise PCF8591PDACvalueOutOfBoundsError
         return __val
 
+# Test harnesses
 if __name__ == "__main__":
 
     from smbus import SMBus
@@ -141,9 +155,6 @@ if __name__ == "__main__":
         sensor.writeDAC(256)
     except PCF8591PDACvalueOutOfBoundsError as e:
         print "Passed:  " + e.message
-
-    
-    
     
     sensor.writeDAC(255)
     sleep(1)
